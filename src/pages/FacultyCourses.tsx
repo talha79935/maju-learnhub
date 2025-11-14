@@ -1,11 +1,28 @@
+import { useState } from "react";
 import { FacultySidebar } from "@/components/FacultySidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, FileText, Calendar } from "lucide-react";
+import { BookOpen, Users, FileText, Calendar, Edit, Trash2 } from "lucide-react";
+import { CourseDialog } from "@/components/CourseDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
+interface Course {
+  id: number;
+  name: string;
+  code: string;
+  semester: string;
+  students: number;
+  schedule: string;
+  room: string;
+  description: string;
+  assignments: number;
+  attendance: number;
+}
 
 const FacultyCourses = () => {
-  const courses = [
+  const [courses, setCourses] = useState<Course[]>([
     {
       id: 1,
       name: "Database Systems",
@@ -30,7 +47,59 @@ const FacultyCourses = () => {
       assignments: 6,
       attendance: 88,
     },
-  ];
+  ]);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const handleCreateCourse = () => {
+    setEditingCourse(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditCourse = (course: Course) => {
+    setEditingCourse(course);
+    setDialogOpen(true);
+  };
+
+  const handleSaveCourse = (courseData: Omit<Course, 'id' | 'students' | 'assignments' | 'attendance'>) => {
+    if (editingCourse) {
+      setCourses(courses.map(c => 
+        c.id === editingCourse.id 
+          ? { ...c, ...courseData }
+          : c
+      ));
+    } else {
+      const newCourse: Course = {
+        ...courseData,
+        id: Math.max(...courses.map(c => c.id), 0) + 1,
+        students: 0,
+        assignments: 0,
+        attendance: 0,
+      };
+      setCourses([...courses, newCourse]);
+    }
+  };
+
+  const handleDeleteClick = (courseId: number) => {
+    setCourseToDelete(courseId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (courseToDelete) {
+      setCourses(courses.filter(c => c.id !== courseToDelete));
+      toast({
+        title: "Course Deleted",
+        description: "The course has been removed successfully.",
+      });
+    }
+    setDeleteDialogOpen(false);
+    setCourseToDelete(null);
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -42,7 +111,7 @@ const FacultyCourses = () => {
               <h1 className="text-3xl font-bold text-foreground mb-2">My Courses</h1>
               <p className="text-muted-foreground">Manage and track your teaching courses</p>
             </div>
-            <Button variant="default">Create New Course</Button>
+            <Button variant="default" onClick={handleCreateCourse}>Create New Course</Button>
           </div>
         </div>
 
@@ -62,9 +131,17 @@ const FacultyCourses = () => {
                       </div>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                    Active
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                      Active
+                    </Badge>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditCourse(course)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(course.id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -114,6 +191,30 @@ const FacultyCourses = () => {
           ))}
         </div>
       </main>
+
+      <CourseDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        course={editingCourse}
+        onSave={handleSaveCourse}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the course and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
