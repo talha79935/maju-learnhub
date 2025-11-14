@@ -46,15 +46,17 @@ const Index = () => {
                 className="bg-white text-primary hover:bg-white/90 shadow-lg"
                 onClick={() => navigate("/dashboard")}
               >
-                Go to Dashboard
+                Student Portal
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button 
                 size="lg" 
                 variant="outline" 
                 className="border-white text-white hover:bg-white/10"
+                onClick={() => navigate("/faculty")}
               >
-                Learn More
+                Faculty Portal
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </div>
