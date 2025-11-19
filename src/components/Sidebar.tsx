@@ -1,12 +1,34 @@
-import { Home, BookOpen, FileText, Calendar, Bell, User, LogOut } from "lucide-react";
+import { Home, BookOpen, FileText, Calendar, Bell, User, LogOut, Award } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export const Sidebar = () => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({ title: 'Logged out successfully' });
+      navigate('/login');
+    } catch (error: any) {
+      toast({
+        title: 'Error logging out',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: BookOpen, label: "Courses", path: "/courses" },
     { icon: FileText, label: "Assignments", path: "/assignments" },
+    { icon: Award, label: "Grades", path: "/grades" },
     { icon: Calendar, label: "Attendance", path: "/attendance" },
     { icon: Bell, label: "Announcements", path: "/announcements" },
     { icon: User, label: "Profile", path: "/profile" },
@@ -43,6 +65,7 @@ export const Sidebar = () => {
         <Button 
           variant="ghost" 
           className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          onClick={handleLogout}
         >
           <LogOut className="h-5 w-5 mr-3" />
           Logout
